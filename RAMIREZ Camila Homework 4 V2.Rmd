@@ -38,55 +38,16 @@ data <- read_dta("civ_87_08.dta")
 View(data)
 ```
 
-## EXERCISE 1
-
-# Question a)
-In terms of sampling, what are the main limitations of survey data for measuring inequality?
-
-There are several issues with using survey data for measuring inequality. Many of these issues focus on the extremes of the distribution, in which we may be particularly interested when measuring inequality (for instance, for analyzing the share of the top 1% or top 0.1%).
-
-First, as we are using the response of individuals, there is much more space to measurement errors than when using official data, from tax reports for example. In this sense, it could be that reporting wrongly or incompletely income or consumption data is correlated with the level of income, and therefore we are not obtaining a reliable distribution of this variables. In particular, top income people are likely poorly measured by households surveys. First, there are some sources of income that are prevalent between richer households that are particularly difficult to estimate and report by individuals, such as capital income. On the contrary, relatively stable sources of income such as labor income, are more likely to be correctly report by individuals. Also, it could be that people in the extreme of the distribution have incentives to under-report their income. Some literature suggests that tax reports are likely better to estimate rich people income, although fiscal evasion also difficults this measurement. It is worth noting that survey data can capture some sources of informal income that tax reports don't, which may be significant for poor households.
-
-Additionally, we could have a sample too small to properly capture the income and characteristics of the extremes of the distribution, particularly if we are interested in a small fraction of the population.
-
-Finally, we should consider that we usually survey households, and not individuals. This means that we are not considering intra-household inequality, while economic literature reject the hypothesis of complete equality intra-households. Also, when one individual is asked about the other people of the household, it is more likely to have errors and imprecisions.
-
-
-# Question b)
-
-Why can it be important to exclude outliers for measuring inequality?
-
-First of all, and for the diverse reasons stated before, it is more likely to have issues in measuring income or consumption in the tails of the distribution. In particular for the very rich, their income may be difficult to estimate and report, it's sources may be more unstable than those of the rest of the population, there may be a tendency to under-report, etc. Also, we may have too few individuals to draw robust conclusions about the extremes of the distribution. As inequality measures are generally sensitive to extreme values, it becomes particularly important to treat outliers when measuring inequality. A random increase in the measurement error in one year in the report of the income of the richest people, for instance, may have a significant effect on inequality measurement, although it is not driven by a real change in the distribution. 
-
-In addition to measurement issues, it can be the case that we are interested in excluding extreme values even if they are correctly measured: excluding individuals with very extreme values would allow us to focus on the "majority" of the population and the inequality dynamics that affect it. Therefore, we may want to leave out extreme cases of marginalized individuals that have no income whatsoever, or extremely rich individuals that only represent a very tiny fraction of the population. If Elon Musk wins millions of dollars in one month, should that really affect the way we quantify inequality in the society? It depends on what is our main focus. There are certain cases in which we may be particularly interested in analyzing the share of the total income of the super-rich, and in that case excluding outliers when they represent true values of income, wealth or consumption, is problematic. 
-
-
-```{r, warnings = FALSE, results = FALSE}
-freq.na(data)
-
-```
-
-# Question c)
-
-Compute the level of consumption per capita per each household.
+# c)
 
 ```{r, warnings = FALSE}
 data$conspercapita <- data$constot/data$hhsize
 identical(data$conspc, data$conspercapita)
-#I check that the difference is very small:
 dif <- data$conspercapita - data$conspc
 summary(dif)
 ```
 
-# Question d) 
-
-It is proposed to compute the (non-weighted) median and
-standard deviation of the logarithm of consumption per capita for each
-year separately, and then to exclude those households whose logarithm
-consumption per capita is higher than the median by more than 3 standard
-deviations, or lower than the median by more than 3 standard deviations.
-
-1) Why is it suggested to take the logarithm? Why can 3 standard deviations be deemed rather safe? 
+#  d) 
 
 ```{r, warnings = FALSE}
 data$logpc <- log(data$conspercapita)
@@ -98,28 +59,10 @@ hist(data$conspercapita,
      xlab="")
 ```
 
-Taking logarithms makes the distribution look more normally-distributed and, specifically, more symmetrical, as can be seen in the histograms of each of both variables. For excluding outliers at both extremes and only working with the "middle range" of observations, we should not work with a highly asymmetrical distribution as the one of consumption per capita in levels. 
-
-Additionally, taking logarithms reduces the variability of the data. Therefore, values further than 3 standard deviations from the median can be regarded as truly "extreme", in particular if we assume normality. As a matter of fact, and as we will compute below, we are excluding less than 1% of the observations by considering this threshold. 
-
-
-2) Why should you use the unweighted median rather than the weighted median to identify outliers ?
-
-Outliers may reflect the characteristics of the tail of the distribution of the population, or they can be a sign of measurement errors, in which case they are "intrinsic" to our sample, and not "generalizable" to the population.
-
-Taking weights to compute the median and the threshold adulterates the identification of outliers, because certain observations may actually not be anomalous, but after taking weights they end up being outside the threshold and wrongly excluded from our data. This alteration of the thresholds is the main reason why we should use the unweigthed meadian rather than the weighted one. 
-
-
-3) Withdraw these observations from your database. 
-
 ```{r, warnings = FALSE}
 
 median1 <- median(data$logpc[data$year==1987])
 sd1 <- sd(data$logpc[data$year==1987])
-median2 <- median(data$logpc[data$year==1998])
-sd2 <- sd(data$logpc[data$year==1998])
-median3 <- median(data$logpc[data$year==2008])
-sd3 <- sd(data$logpc[data$year==2008])
 
 data$outlier2 <- ifelse((abs(data$logpc - median1)> 3*sd1 & data$year==1987 |  
                      abs(data$logpc - median2)> 3*sd2 & data$year==1998 |
@@ -133,24 +76,14 @@ cleardata <- subset(data, data$outlier2==0)
 
 ```
 
-## EXERCISE 2
+## PART 2
 
-# Question a)
-
-Compute the budget shares of food and non-food consumption for the
-representative households in each region.
-
-The representative household is of 4 members, male-headed and whose head
-is a blue-collar worker, either self-employed outside agriculture or a
-farmer.
+# a)
 
 ```{r, warnings = FALSE}
 
-#Dummy for representative household:
 
 describe(cleardata$femalehead)
-describe(cleardata$work_farmer)
-describe(cleardata$work_selfem)
 
 cleardata$representative <- ifelse((cleardata$hhsize==4 & cleardata$femalehead==0 
                            & (cleardata$work_farmer==1 | cleardata$work_selfem == 1)), 1, 0)
@@ -204,70 +137,11 @@ table3
 
 ```
 
-Show mathematically why you should use these weights( weight equal to
-the number of people in the household multiplied by the weight of the
-household multiplied by the consumption per capita of the household).
-
-First, let's note that: number of people in the household \* consumption
-per capita of the household = total consumption of the household.
-
-Therefore, we are weighting by the weight of the household \* total
-consumption of the household. So, what we are doing is:
-
-$$ \frac{\sum \frac{FoodConsumption}{TotalConsumption}*TotalConsumption*HouseholdWeight}{\sum TotalConsumption*HouseholdWeight} $$
-
-$$ = \frac{\sum FoodConsumption*HouseholdWeight}{\sum TotalConsumption*HouseholdWeight} $$
-
-Ultimately, what we are looking at by using these weights is how much of the aggregate
-consumption of the representative households is dedicated to food, which is our variable of interest. 
+# b)
 
 ```{r, warnings = FALSE}
-#What are we doing using these weights?
 
-cleardata$aa <- cleardata$weight*cleardata$exp_food
-cleardata$bb <- cleardata$weight*cleardata$constot
-sum(cleardata$aa[cleardata$north==1 & cleardata$representative==1 &
-                cleardata$year==1987])/sum(cleardata$bb[cleardata$north==1 & 
-                cleardata$representative==1 & cleardata$year==1987])
-```
-
-# Question b)
-
-With 1987 as the base year, compute: the Laspeyres CPI for each region.
-the Paasche CPI for each region.
-
-```{r, warnings = FALSE}
-#Checking that the prices and budget shares are defined for a certain year and region:
-
-summary(cleardata$avprice_food[cleardata$year==1987 & cleardata$north==1])
-summary(cleardata$avprice_food[cleardata$year==1987 & cleardata$north==0])
-
-summary(cleardata$bdgshr_food[cleardata$year==1987 & cleardata$north==1])
-summary(cleardata$bdgshr_food[cleardata$year==1987 & cleardata$north==0])
-
-describe(cleardata$avprice_food)
-describe(cleardata$bdgshr_food)
-
-#LASPEYRES 
-#1987 for the North:
-pricesfood1987N = mean(cleardata$avprice_food[cleardata$year==1987
-                                              & cleardata$north==1])
-pricesnonfood1987N = mean(cleardata$avprice_othr[cleardata$year==1987 
-                                                 & cleardata$north==1])
-sharefood1987N = mean(cleardata$bdgshr_food[cleardata$year==1987 
-                                            & cleardata$north==1])
-sharenonfood1987N = mean(cleardata$bdgshr_othr[cleardata$year==1987
-                                               & cleardata$north==1])
-
-#1987 for the South:
-pricesfood1987S = mean(cleardata$avprice_food[cleardata$year==1987 
-                                              & cleardata$north==0])
-pricesnonfood1987S = mean(cleardata$avprice_othr[cleardata$year==1987 
-                                                 & cleardata$north==0])
-sharefood1987S = mean(cleardata$bdgshr_food[cleardata$year==1987 
-                                            & cleardata$north==0])
-sharenonfood1987S = mean(cleardata$bdgshr_othr[cleardata$year==1987 
-                                               & cleardata$north==0])
+#LASPEYRES
 
 cleardata$laspeyres <- ifelse(cleardata$north==1,
   (sharefood1987N*cleardata$avprice_food/pricesfood1987N+
@@ -283,7 +157,7 @@ tidy(reg3)
 reg4 <- lm(cleardata$laspeyres[cleardata$north==0] ~ cleardata$year[cleardata$north==0] -1)
 tidy(reg4)
 
-#I display the results as a table:
+#Display the results as a table:
 
 matrix_2 <- as.vector(reg3$coefficients*100)
 matrix_3 <- as.vector(reg4$coefficients*100)
@@ -300,11 +174,6 @@ table_laspeyres <- kable(
 table_laspeyres
 
 #PAASCHE:
-
-sharefood1998N = mean(cleardata$bdgshr_food[cleardata$year==1998 & cleardata$north==1])
-sharenonfood1998N = mean(cleardata$bdgshr_othr[cleardata$year==1998 & cleardata$north==1])
-sharefood1998S = mean(cleardata$bdgshr_food[cleardata$year==1998 & cleardata$north==0])
-sharenonfood1998S = mean(cleardata$bdgshr_othr[cleardata$year==1998 & cleardata$north==0])
 
 cleardata$paasche <- 
   ifelse(cleardata$north==1, 1/(cleardata$bdgshr_food/100*(pricesfood1987N/cleardata$avprice_food)+
@@ -338,85 +207,11 @@ table_paasche
 
 
 ```
-Firstly, we should notice that we obtain very similar results for both indexes. Therefore, in this case, there should not be a great difference between using one or the other index. On the other hand, generally we would expect the Laspeyres index to be greater than the Paasche index. However, empirically we can observe cases where this is the other way around, as occured in 2008 according to our computations (although, again, both indexes are very similar). When using the original quantities to compare prices in two different periods, as the Laspeyres index does, we are assuming that the consumer does not adjust its bundle of consumption to the price changes, even if these changes imply different relative prices. However, we actually would expect the individual to change this bundle, substituting some goods for others that became relatively cheaper, and therefore the actual inflation faced by the consumer would be less than the one suggsted by the Laspeyres index. On the contrary, Paasche utilizes the quantities of the current period, and assumes that in the initial period the individual consumed the same bundle, with different prices. Again, this is likely not true. We must bear in mind, however, that in this case there is probably not a very strong substitution effect, as we are looking at great aggregates as "food" and "non food". 
 
-# Question c)
-
-Compute a PPP aggregate for the North region with respect to the South. For each year in your
-dataset, compute:
-the Laspeyres PPP of Northern Cote d'Ivoire.
-the Paasche PPP of Northern Cote d'Ivoire.
-the Fisher PPP of Northern Cote d'Ivoire.
-Comment on the differences between the three measures.
+#  c)
 
 
 ```{r, warnings = FALSE}
-
-#I create the variables that I will need and I do not have yet:
-
-#For 1998:
-pricesfood1998N = mean(cleardata$avprice_food[cleardata$year==1998
-                                              & cleardata$north==1])
-pricesnonfood1998N = mean(cleardata$avprice_othr[cleardata$year==1998 
-                                                 & cleardata$north==1])
-pricesfood1998S = mean(cleardata$avprice_food[cleardata$year==1998 
-                                              & cleardata$north==0])
-pricesnonfood1998S = mean(cleardata$avprice_othr[cleardata$year==1998 
-                                                 & cleardata$north==0])
-
-#For 2008:
-
-pricesfood2008N = mean(cleardata$avprice_food[cleardata$year==2008
-                                              & cleardata$north==1])
-pricesnonfood2008N = mean(cleardata$avprice_othr[cleardata$year==2008 
-                                                 & cleardata$north==1])
-pricesfood2008S = mean(cleardata$avprice_food[cleardata$year==2008 
-                                              & cleardata$north==0])
-pricesnonfood2008S = mean(cleardata$avprice_othr[cleardata$year==2008 
-                                                 & cleardata$north==0])
-
-sharefood2008N = mean(cleardata$bdgshr_food[cleardata$year==2008 
-                                            & cleardata$north==1])
-sharenonfood2008N = mean(cleardata$bdgshr_othr[cleardata$year==2008
-                                               & cleardata$north==1])
-sharefood2008S = mean(cleardata$bdgshr_food[cleardata$year==2008 
-                                            & cleardata$north==0])
-sharenonfood2008S = mean(cleardata$bdgshr_othr[cleardata$year==2008 
-                                               & cleardata$north==0])
-
-#LASPEYRES PPP:
-
-LPPP1987 <- ((pricesfood1987N/pricesfood1987S)*sharefood1987S + 
-               (pricesnonfood1987N/pricesnonfood1987S)*sharenonfood1987S)
-LPPP1998 <- ((pricesfood1998N/pricesfood1998S)*sharefood1998S + 
-               (pricesnonfood1998N/pricesnonfood1998S)*sharenonfood1998S)
-LPPP2008 <- ((pricesfood2008N/pricesfood2008S)*sharefood2008S + 
-               (pricesnonfood2008N/pricesnonfood2008S)*sharenonfood2008S)
-laspeyres.vector <- c(LPPP1987, LPPP1998, LPPP2008)
-laspeyres.vector
-
-#PAASCHE PPP:
-
-PPPP1987 <- 100/(sharefood1987N/100*(pricesfood1987S/pricesfood1987N)+
-            sharenonfood1987N/100*(pricesnonfood1987S/pricesnonfood1987N))
-            
-PPPP1998 <- 100/(sharefood1998N/100*(pricesfood1998S/pricesfood1998N)+
-            sharenonfood1998N/100*(pricesnonfood1998S/pricesnonfood1998N))
-
-PPPP2008 <- 100/(sharefood2008N/100*(pricesfood2008S/pricesfood2008N)+
-            sharenonfood2008N/100*(pricesnonfood2008S/pricesnonfood2008N))
-            
-paasche.vector <- c(PPPP1987, PPPP1998, PPPP2008)
-paasche.vector
-
-#FISHER PPP: 
-
-FPPP1987 <- sqrt(LPPP1987*PPPP1987)
-FPPP1998 <- sqrt(LPPP1998*PPPP1998)
-FPPP2008 <- sqrt(LPPP2008*PPPP2008)
-
-fisher.vector <- c(FPPP1987, FPPP1998, FPPP2008)
-fisher.vector
 
 library(kableExtra)
 
@@ -434,9 +229,8 @@ table_PPP <- kable(
 table_PPP
 
 ```
-The three methods show different estimations, but they are very similar. They all suggest that the North is cheaper than the South. The PPP estimates are between 65 and 73, suggesting that what you would buy with 100 CFA franc in the South, values between 65 and 73 CFA franc in the North. When computing the Laspeyres PPP, we use the budget shares of the South to calculate the index. When computing the Paasche PPP, we use the budget shares of the North to calculate the index. If the patterns of consumption between North and South are significantly different, it becomes problematic to favor one consumption structure over the other for the computation of this measure. The Fisher index can be understood as a "compromise" between these two measures. 
 
-# Question d)
+# d)
 
 ```{r, warnings = FALSE}
 # First, I transform the consumption taking into account inflation:
@@ -452,11 +246,9 @@ summary(cleardata$conspcsouth87-cleardata$conspc87)
 
 ```
 
-## EXERCISE 3
+## PART 3
 
-# Question a) 
-
-The poverty threshold of one dollar a day is equivalent to 237 franc CFA 1987.
+# a) 
 
 Calculate the poverty headcount rate over time, across regions and at the national level.
 
@@ -479,40 +271,7 @@ poverty_south_1987 <- weighted.mean(cleardata$poor[cleardata$north==0
                                                       & cleardata$year==1987])
 
 poverty1987.vector <- c(generalpoverty1987, poverty_north_1987, poverty_south_1987)
-poverty1987.vector
 
-#1998:
-
-generalpoverty1998 <- weighted.mean(cleardata$poor[cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$year==1998])
-
-poverty_north_1998 <- weighted.mean(cleardata$poor[cleardata$north==1 
-                                                   & cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$north==1
-                                                      & cleardata$year==1998])
-poverty_south_1998 <- weighted.mean(cleardata$poor[cleardata$north==0
-                                                   & cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$north==0 
-                                                      & cleardata$year==1998])
-
-poverty1998.vector <- c(generalpoverty1998, poverty_north_1998, poverty_south_1998)
-poverty1998.vector
-
-#2008:
-generalpoverty2008 <- weighted.mean(cleardata$poor[cleardata$year==2008],
-                                    cleardata$weight3[cleardata$year==2008])
-
-poverty_north_2008 <- weighted.mean(cleardata$poor[cleardata$north==1
-                                                   & cleardata$year==2008], 
-                                    cleardata$weight3[cleardata$north==1
-                                                      & cleardata$year==2008])
-poverty_south_2008 <- weighted.mean(cleardata$poor[cleardata$north==0
-                                                   & cleardata$year==2008], 
-                                    cleardata$weight3[cleardata$north==0 
-                                                      & cleardata$year==2008])
-
-poverty2008.vector <- c(generalpoverty2008, poverty_north_2008, poverty_south_2008)
-poverty2008.vector
 
 table_poverty <- as.table(rbind(poverty1987.vector, poverty1998.vector, 
                                 poverty2008.vector))
@@ -529,33 +288,16 @@ table_poverty
 
 
 ```
-First, we note that there is a very significant increase in poverty from 1987 to 1998, which is in line with the official data regarding the evolution of poverty in the country in the period. Then, we observe another increase, a bit more moderate, from 1998 to 2008. This was a period of decrease in the economic activity and included a civil war, which clearly impacts the living standards of the population. Considering the difference across regions, the north starts in a worse situation in 1987, which is reversed in 1998 after a sharp increase in the poverty in the south. In 2008, the poverty seems very equal between both regions. 
 
-# Question b)
-Assume that price levels and preferences do not differ across regions. This means that the CPI observed
-in the South is also valid in the North. Likewise, the PPP factor is 1 across regions.
-Create a new cpi variable which expands the CPI observed in the South to both regions.
+# b)
 
 ```{r, warnings = FALSE}
 
 table(cleardata$cpi)
-summary(cleardata$cpi[cleardata$year==1987 & cleardata$north==0])
-summary(cleardata$cpi[cleardata$year==1987 & cleardata$north==1])
-summary(cleardata$cpi[cleardata$year==1998 & cleardata$north==0])
-summary(cleardata$cpi[cleardata$year==1998 & cleardata$north==1])
-summary(cleardata$cpi[cleardata$year==2008 & cleardata$north==0])
-summary(cleardata$cpi[cleardata$year==2008 & cleardata$north==1])
 
 cleardata$cpi2 <- ifelse(cleardata$year==1987, 1,
                   ifelse(cleardata$year==1998, 1.9245, 2.5573))
 ```
-
-Use the new cpi variable and daily per capita consumption at current prices (conspc) and generate
-daily per capita consumption in constant 1987 franc CFA, (name it newconspc 87).
-
-Build a dummy variable equal to 1 if newconspc 87 is below the threshold of 237 franc CFA a
-day, and 0 otherwise.
-Calculate the poverty headcount rate over time, across regions and at the national level.
 
 ```{r, warnings = FALSE}
 cleardata$newconspc87 <- cleardata$conspc/cleardata$cpi2
@@ -576,87 +318,19 @@ poverty_south_1987_2 <- weighted.mean(cleardata$poor2[cleardata$north==0
 
 poverty1987.vector2 <- c(generalpoverty1987_2, poverty_north_1987_2, 
                          poverty_south_1987_2)
-poverty1987.vector2
-
-#1998:
-
-generalpoverty1998_2 <- weighted.mean(cleardata$poor2[cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$year==1998])
-
-poverty_north_1998_2 <- weighted.mean(cleardata$poor2[cleardata$north==1 
-                                                   & cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$north==1
-                                                      & cleardata$year==1998])
-poverty_south_1998_2 <- weighted.mean(cleardata$poor2[cleardata$north==0
-                                                   & cleardata$year==1998], 
-                                    cleardata$weight3[cleardata$north==0 
-                                                      & cleardata$year==1998])
-
-poverty1998.vector2 <- c(generalpoverty1998_2, poverty_north_1998_2, 
-                         poverty_south_1998_2)
-poverty1998.vector2
-
-#2008:
-generalpoverty2008_2 <- weighted.mean(cleardata$poor2[cleardata$year==2008],
-                                    cleardata$weight3[cleardata$year==2008])
-
-poverty_north_2008_2 <- weighted.mean(cleardata$poor2[cleardata$north==1
-                                                   & cleardata$year==2008], 
-                                    cleardata$weight3[cleardata$north==1
-                                                      & cleardata$year==2008])
-poverty_south_2008_2 <- weighted.mean(cleardata$poor2[cleardata$north==0
-                                                   & cleardata$year==2008], 
-                                    cleardata$weight3[cleardata$north==0 
-                                                      & cleardata$year==2008])
-
-poverty2008.vector2 <- c(generalpoverty2008_2, poverty_north_2008_2, 
-                         poverty_south_2008_2)
-poverty2008.vector2
-
-table_poverty2 <- as.table(rbind(poverty1987.vector2, poverty1998.vector2, 
-                                poverty2008.vector2))
-colnames(table_poverty2) <- c("National level","North","South")
-rownames(table_poverty2) <- c("1987", "1998", "2008")
-table_poverty2 <- kable(
-  table_poverty2,
-  caption = "Poverty rates per year and per region, with new CPI",
-  align = c('c', 'c', 'c'),
-  digits = 3)
-
-
-table_poverty2
-table_poverty
-
 
  
 ```
-We observe that the poverty rates have changed significantly for the north of the country. When not taking into account the difference in prices, we get significantly higher poverty rates for the north, in all the years. We previously observed that, according to our PPP calculations, the North is cheaper than the South. If we do not take into account this difference when calculating poverty, and assign the prices of the South to the whole country, we will be overestimating the poverty in the north (and therefore at the national level), because we are assuming that the people there face higher prices than they actually do, which affects the purchase power of their income. This clearly reflects the importance of considering differences in prices among regions. Not considering these differences is an important weakness, for instance, of some national surveys that only cover urban areas, which usually have different prices than rural areas. 
 
 ## EXERCISE 4
 
-# Question a)
+# a)
 
-For each year of your dataset, associate to each percentile its
-corresponding per capita consumption measure using the variable conspc
-87.
-
-The weighted empirical cumulative distribution function Fn is defined so
-that, for any real number y, the value of Fn(y) is equal to the total
-weight of all entries of x that are less than or equal to y.
-
-$$ \rightarrow Fn(y) = sum(weights[x <= y]) $$
-
-```{r, results= FALSE}
-
-library(spatstat)
-```
 
 ```{r, warnings = FALSE}
 
 library(spatstat)
 cleardata$weight3 <- cleardata$weight*cleardata$hhsize
-
-#If I want to compute the threshodls:
 
 f1 <- ewcdf(cleardata$conspc87[cleardata$year==1987], 
             cleardata$weight3[cleardata$year==1987])
@@ -672,11 +346,6 @@ quantiles1987 <- quantile.ewcdf(f1, probs = q)
 quantiles1998 <- quantile.ewcdf(f2, probs = q)
 quantiles2008 <- quantile.ewcdf(f3, probs = q)
 
-quantiles1987
-quantiles1998
-quantiles2008
-
-#If I want to determine to which percentile belongs each variable:
   
 cleardata$percentile <- ifelse(cleardata$year==1987, 
                                ceiling(100*f1(cleardata$conspc87)), NA)
@@ -688,10 +357,7 @@ cleardata$percentile <- ifelse(cleardata$year==2008,
                       
 ```
 
-# Question b)
-
-Compute the average growth for each percentile over the periods 1987-98,
-1998-08.
+# b)
 
 ```{r, warnings = FALSE}
 
@@ -705,18 +371,6 @@ b <- weighted.mean(cleardata$conspc87[cleardata$year==1998 & cleardata$percentil
 conspc1998 <- c(conspc1998, b)
 }
 
-#I check that I obtain the same for a random quantile: 
-weighted.mean(cleardata$conspc87[cleardata$year==1998 & cleardata$conspc87<quantiles1998[2] 
-                                 & cleardata$conspc87>=quantiles1998[1]], 
-                              cleardata$weight3[cleardata$year==1998 & cleardata$conspc87<quantiles1998[2]
-                                                & cleardata$conspc87>=quantiles1998[1]])
-conspc1998[2]
-
-#Alternatively:
-sum(cleardata$conspc87[cleardata$year==1998 & cleardata$percentile==2]*
-                  cleardata$weight3[cleardata$year==1998 & cleardata$percentile==2])/
-  sum(cleardata$weight3[cleardata$year==1998 & cleardata$percentile==2])
-
 #For 1987:
 
 conspc1987 <- vector("numeric")
@@ -727,12 +381,6 @@ bb <- weighted.mean(cleardata$conspc87[cleardata$year==1987 & cleardata$percenti
 conspc1987 <- c(conspc1987, bb)
 }
 
-#I check that I obtain the same for a random quantile: 
-weighted.mean(cleardata$conspc87[cleardata$year==1987 & cleardata$conspc87<quantiles1987[2] 
-                                 & cleardata$conspc87>=quantiles1987[1]], 
-                              cleardata$weight3[cleardata$year==1987 & cleardata$conspc87<quantiles1987[2]
-                                                & cleardata$conspc87>=quantiles1987[1]])
-conspc1987[2]
 
 # For 2008:
 conspc2008 <- vector("numeric")
@@ -743,12 +391,6 @@ bbb <- weighted.mean(cleardata$conspc87[cleardata$year==2008 & cleardata$percent
 conspc2008 <- c(conspc2008, bbb)
 }
 
-#I check that I obtain the same for a random quantile: 
-weighted.mean(cleardata$conspc87[cleardata$year==2008 & cleardata$conspc87<quantiles2008[2] 
-                                 & cleardata$conspc87>=quantiles2008[1]], 
-                              cleardata$weight3[cleardata$year==2008 & cleardata$conspc87<quantiles2008[2]
-                                                & cleardata$conspc87>=quantiles2008[1]])
-conspc2008[2]
 
 # Average growth rate of consumption per capita per year, per percentile:
 
@@ -762,7 +404,7 @@ datagrowth<- data.frame(conspc1987, conspc1998, conspc2008, averagegrowth1998, a
 
 ```
 
-## Question c)
+## c)
 
 Draw the two curves on the same graph.
 
@@ -789,47 +431,4 @@ plot1 <-
 plot1
 
 ```
-
-## Question d)
-
-Comment the growth incidence curves.
-
-The incidence curve of the period 1987-1998 show that there is a
-negative growth for all percentiles of consumption per capita. When
-looking at the evolution of the PIB per capita in Cote d'Ivoire during
-those years, this results seem adjusted to the evolution of the economy
-during the period. The average annual growth is quite similar among
-percentiles for that period, with the exception of the last percentiles,
-that present a greater decline in their consumption per capita than the
-rest of the population. In this sense, the "richest" suffered a greater
-decline of their consumption per capita. Therefore, if we were to
-compare the extremes of the consumption per capita distribution, they
-would be more equal after this period of declining consumption.
-
-The incidence curve of the period 1998-2008 has a different shape. It
-shows that the fall in consumption per capita is bigger for the poorest,
-and it even gets positive for the highest percentiles. In particular,
-while the majority of the percentiles displays a fall in the average
-consumption per capita, from the percentile 89 the growth rate becomes
-positive, reflecting an increase in the consumption per capita of the
-richest.
-
-## Question e)
-
-Given the GIC between 1998 and 2008, is inequality likely to fall or
-rise in 2008 ? Justify your answer.
-
-Inequality is likely to rise. As previously stated, the curve for the
-period between 1998 and 2008 shows that the growth in the consumption
-per capita becomes less negative as we look at higher percentiles, even
-becoming positive for the highest ones. This means that the growth rate
-of the consumption per capita increases as we observe increasing levels
-of consumption. Therefore, inequality of consumption is likely to
-increase. It is interesting noting that this positive relationship
-between growth and level of consumption becomes higher for the richest,
-suggesting a particularly strong increase in inequality when comparing
-the "top-consumption" individuals to the rest of the population.
-
-
-
 
